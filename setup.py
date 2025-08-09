@@ -8,6 +8,5 @@ setup(
     install_requires=[
         "streamlit==1.26.0",
         "pandas==2.0.3",
-        "pillow==10.0.0",
     ],
 )
