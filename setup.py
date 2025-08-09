@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "streamlit==1.26.0",
-        "pandas==2.0.3",
+        "streamlit==1.11.0",
+        "pandas==1.4.3",
     ],
 )
