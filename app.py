@@ -5,6 +5,8 @@ import pandas as pd
 from PIL import Image
 import os
 import uuid
+import base64
+import io
 
 # Set page configuration
 st.set_page_config(page_title="Bike Builder Checklist", layout="wide")
@@ -231,6 +233,13 @@ def main():
     with tab2:
         st.subheader("Saved Records")
         
+        # Function to generate download link for dataframe
+        def get_csv_download_link(df, filename="bike_checklist_data.csv", link_text="Download CSV"):
+            csv = df.to_csv(index=False)
+            b64 = base64.b64encode(csv.encode()).decode()
+            href = f'<a href="data:file/csv;base64,{b64}" download="{filename}">{link_text}</a>'
+            return href
+        
         # Load and display records
         try:
             df = load_checklists()
@@ -247,10 +256,28 @@ def main():
                 view_df = df[['id', 'model', 'color', 'serial_number', 'technician_name', 'date', 'status']]
                 st.dataframe(view_df.style.applymap(color_status, subset=['status']), use_container_width=True)
                 
+                # Add export functionality
+                col_export1, col_export2 = st.columns([1, 3])
+                with col_export1:
+                    export_option = st.selectbox(
+                        "Export Options:",
+                        options=["All Records", "Current View", "Selected Record"]
+                    )
+                with col_export2:
+                    if export_option == "All Records":
+                        st.markdown(get_csv_download_link(df, "all_bike_records.csv", "⬇️ Download All Records"), unsafe_allow_html=True)
+                    elif export_option == "Current View":
+                        st.markdown(get_csv_download_link(view_df, "bike_records_summary.csv", "⬇️ Download Current View"), unsafe_allow_html=True)
+                
                 # Allow detailed view of a selected record
                 selected_id = st.selectbox("Select record ID to view details:", options=df['id'].tolist())
                 if selected_id:
                     record = df[df['id'] == selected_id].iloc[0]
+                    
+                    # Add single record export option
+                    if export_option == "Selected Record":
+                        single_record_df = df[df['id'] == selected_id]
+                        st.markdown(get_csv_download_link(single_record_df, f"bike_record_{selected_id}.csv", "⬇️ Download Selected Record"), unsafe_allow_html=True)
                     
                     # Add status update functionality
                     col_status1, col_status2 = st.columns([1, 3])
