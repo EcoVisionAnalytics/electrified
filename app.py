@@ -2,7 +2,6 @@ import streamlit as st
 import sqlite3
 from datetime import datetime
 import pandas as pd
-from PIL import Image
 import os
 import uuid
 import base64
@@ -105,34 +104,45 @@ def initialize_form_state():
 def reset_form():
     st.session_state.form_reset_key = str(uuid.uuid4())
 
+# Function to load image file as base64 string
+def get_image_base64(image_path):
+    if os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    return None
+
 # Main app
 def main():
-    # Display logo if it exists (try multiple possible locations)
-    potential_logo_paths = [
-        "electrfied.jpg",
-        os.path.join(os.getcwd(), "electrfied.jpg"),
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "electrfied.jpg")
-    ]
+    # Set up layout
+    col1, col2 = st.columns([1, 3])
     
-    logo_found = False
-    for logo_path in potential_logo_paths:
-        if os.path.exists(logo_path):
-            try:
-                logo = Image.open(logo_path)
-                col1, col2 = st.columns([1, 3])
-                with col1:
-                    st.image(logo, width=150)
-                with col2:
-                    st.title("Bike Builder Checklist")
+    with col1:
+        # Try to load and display logo using HTML/base64 (no Pillow required)
+        potential_logo_paths = [
+            "electrfied.jpg",
+            os.path.join(os.getcwd(), "electrfied.jpg"),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "electrfied.jpg")
+        ]
+        
+        logo_found = False
+        for logo_path in potential_logo_paths:
+            img_base64 = get_image_base64(logo_path)
+            if img_base64:
+                # Get file extension
+                ext = os.path.splitext(logo_path)[1].lower().replace('.', '')
+                mime_type = f"image/{ext}" if ext != 'jpg' else "image/jpeg"
+                
+                # Display image using HTML
+                st.markdown(f"<img src='data:{mime_type};base64,{img_base64}' width='150'>", unsafe_allow_html=True)
                 logo_found = True
                 break
-            except Exception as e:
-                st.error(f"Error loading logo: {e}")
-                continue
-    
-    if not logo_found:
+        
+        if not logo_found:
+            # Fallback to emoji if logo not found
+            st.write("🚲")
+        
+    with col2:
         st.title("Bike Builder Checklist")
-        st.warning("Logo file 'electrfied.jpg' not found. Please add it to the app directory.")
     
     # Create tabs for form and view records
     tab1, tab2 = st.tabs(["New Checklist", "View Records"])
